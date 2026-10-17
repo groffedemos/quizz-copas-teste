@@ -18,4 +18,4 @@ Dê duplo clique em `index.html` ou abra-o no navegador (por exemplo, `xdg-open 
 - Progresso, pontuação e feedback de acerto/erro (com texto e ícones, não só cor).
 - Resultado final com botão "Jogar novamente".
 - Layout responsivo, foco visível e navegação por teclado (setas/Tab para escolher, Enter para responder).
-- Apenas tema claro por enquanto; a troca de tema virá em uma issue futura.
+- Tema claro/escuro: o tema inicial segue a preferência do sistema e o botão no topo alterna entre eles (cores definidas por variáveis CSS em `:root` e `:root[data-theme="dark"]`).
