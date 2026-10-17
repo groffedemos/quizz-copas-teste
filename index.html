@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz Copa do Mundo 2022</title>
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --text: #1a2233;
+    --muted: #4a5568;
+    --primary: #0b5cad;
+    --primary-dark: #084a8c;
+    --border: #c5cdda;
+    --ok-bg: #e3f6e8;
+    --ok: #146c2e;
+    --err-bg: #fde8e8;
+    --err: #a61b1b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 1rem;
+  }
+  main {
+    max-width: 640px;
+    margin: 1rem auto;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  }
+  h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1.25rem; margin: 1rem 0; }
+  .sub { color: var(--muted); margin: 0 0 1rem; }
+  .status { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; font-weight: 600; }
+  progress { width: 100%; height: 14px; margin: .5rem 0 0; accent-color: var(--primary); }
+  fieldset { border: 0; padding: 0; margin: 0; }
+  .status { margin-bottom: .25rem; }
+  progress { margin-bottom: 1.25rem; }
+  legend {
+    display: block; width: 100%;
+    font-size: 1.35rem; font-weight: 700; line-height: 1.35;
+    margin: 0 0 1.25rem; padding: 1rem 1.1rem;
+    background: #eaf2fb;
+    border-left: 6px solid var(--primary);
+    border-radius: 8px;
+  }
+  #options { display: grid; gap: .75rem; }
+  .opt {
+    display: flex; align-items: center; gap: .9rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    min-height: 56px;
+    margin-bottom: 0;
+    cursor: pointer;
+    background: #fff;
+  }
+  .opt:hover { border-color: var(--primary); }
+  .opt input { width: 1.5rem; height: 1.5rem; accent-color: var(--primary); flex: none; }
+  .opt:focus-within { outline: 3px solid var(--primary); outline-offset: 2px; }
+  .opt.correct { background: var(--ok-bg); border-color: var(--ok); }
+  .opt.wrong { background: var(--err-bg); border-color: var(--err); }
+  .opt .tag { margin-left: auto; font-weight: 700; font-size: .9rem; }
+  .opt.correct .tag { color: var(--ok); }
+  .opt.wrong .tag { color: var(--err); }
+  .feedback { padding: .75rem 1rem; border-radius: 8px; margin: 1rem 0; font-weight: 600; border: 2px solid; }
+  .feedback.ok { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
+  .feedback.err { background: var(--err-bg); color: var(--err); border-color: var(--err); }
+  button {
+    font: inherit; font-weight: 600;
+    background: var(--primary); color: #fff;
+    border: 2px solid var(--primary-dark);
+    border-radius: 8px;
+    padding: .7rem 1.4rem;
+    cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: var(--primary-dark); }
+  button:disabled { background: #8a97aa; border-color: #8a97aa; cursor: not-allowed; }
+  button:focus-visible, .opt:focus-within { outline: 3px solid #f5a300; outline-offset: 3px; }
+  .big { font-size: 2.5rem; font-weight: 700; margin: .5rem 0; }
+  [hidden] { display: none !important; }
+  @media (max-width: 480px) {
+    main { padding: 1rem; }
+    legend { font-size: 1.2rem; padding: .85rem .9rem; }
+    button { width: 100%; min-height: 52px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Quiz: Copa do Mundo 2022</h1>
+  <p class="sub">Copa do Mundo de futebol masculino, Catar. 10 perguntas, uma resposta correta cada.</p>
+
+  <section id="quiz" aria-label="Quiz">
+    <div class="status" aria-live="off">
+      <span id="progressText">Pergunta 1 de 10</span>
+      <span id="scoreText">Pontuação: 0</span>
+    </div>
+    <progress id="bar" max="10" value="0" aria-label="Progresso do quiz"></progress>
+
+    <form id="form" novalidate>
+      <fieldset id="fs">
+        <legend id="question" tabindex="-1"></legend>
+        <div id="options"></div>
+      </fieldset>
+      <div id="feedback" class="feedback" role="status" aria-live="polite" hidden></div>
+      <button type="submit" id="action" disabled>Responder</button>
+    </form>
+  </section>
+
+  <section id="result" hidden aria-live="polite">
+    <h2 id="resultTitle" tabindex="-1">Resultado final</h2>
+    <p class="big" id="finalScore"></p>
+    <p id="finalMsg"></p>
+    <button type="button" id="restart">Jogar novamente</button>
+  </section>
+</main>
+
+<script>
+(function () {
+  var questions = [
+    { q: "Qual país sediou a Copa do Mundo de 2022?",
+      o: ["Rússia", "Catar", "Emirados Árabes Unidos", "Arábia Saudita"], a: 1 },
+    { q: "Quem foi a seleção campeã da Copa de 2022?",
+      o: ["França", "Croácia", "Argentina", "Marrocos"], a: 2 },
+    { q: "Como terminou a final entre Argentina e França?",
+      o: ["Argentina 3 x 3 França, 4 x 2 nos pênaltis para a Argentina",
+          "Argentina 2 x 0 França",
+          "França 4 x 3 Argentina na prorrogação",
+          "Argentina 1 x 0 França"], a: 0 },
+    { q: "Quem foi o artilheiro do torneio, com 8 gols?",
+      o: ["Lionel Messi", "Olivier Giroud", "Julián Álvarez", "Kylian Mbappé"], a: 3 },
+    { q: "Quem ganhou a Bola de Ouro de melhor jogador da Copa?",
+      o: ["Lionel Messi", "Kylian Mbappé", "Luka Modrić", "Neymar"], a: 0 },
+    { q: "Qual seleção africana foi a primeira da história a chegar a uma semifinal de Copa?",
+      o: ["Senegal", "Gana", "Marrocos", "Camarões"], a: 2 },
+    { q: "Qual seleção eliminou o Brasil nas quartas de final?",
+      o: ["Croácia", "Argentina", "Holanda", "Camarões"], a: 0 },
+    { q: "Quem foi eleito o melhor goleiro do torneio?",
+      o: ["Hugo Lloris", "Dominik Livaković", "Yassine Bounou", "Emiliano Martínez"], a: 3 },
+    { q: "Em qual estádio foi disputada a final?",
+      o: ["Estádio Lusail", "Estádio Al Bayt", "Estádio Khalifa", "Estádio Education City"], a: 0 },
+    { q: "Qual seleção venceu a Argentina por 2 x 1 na estreia, na fase de grupos?",
+      o: ["México", "Polônia", "Austrália", "Arábia Saudita"], a: 3 }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var idx, score, answered;
+
+  function start() {
+    idx = 0; score = 0;
+    $("result").hidden = true;
+    $("quiz").hidden = false;
+    render();
+    $("question").focus();
+  }
+
+  function render() {
+    var item = questions[idx];
+    answered = false;
+    $("progressText").textContent = "Pergunta " + (idx + 1) + " de " + questions.length;
+    $("scoreText").textContent = "Pontuação: " + score;
+    $("bar").value = idx;
+    $("question").textContent = (idx + 1) + ". " + item.q;
+    $("feedback").hidden = true;
+    $("feedback").textContent = "";
+    $("fs").disabled = false;
+    var box = $("options");
+    box.innerHTML = "";
+    item.o.forEach(function (text, i) {
+      var label = document.createElement("label");
+      label.className = "opt";
+      var input = document.createElement("input");
+      input.type = "radio"; input.name = "opt"; input.value = i;
+      input.addEventListener("change", function () { $("action").disabled = false; });
+      var span = document.createElement("span");
+      span.textContent = text;
+      var tag = document.createElement("span");
+      tag.className = "tag";
+      label.append(input, span, tag);
+      box.appendChild(label);
+    });
+    $("action").textContent = "Responder";
+    $("action").disabled = true;
+  }
+
+  function check() {
+    var chosen = document.querySelector("input[name=opt]:checked");
+    if (!chosen) return;
+    var pick = +chosen.value, right = questions[idx].a;
+    answered = true;
+    var labels = $("options").children;
+    if (pick === right) score++;
+    labels[right].classList.add("correct");
+    labels[right].querySelector(".tag").textContent = "✔ Correta";
+    if (pick !== right) {
+      labels[pick].classList.add("wrong");
+      labels[pick].querySelector(".tag").textContent = "✘ Sua resposta";
+    }
+    Array.prototype.forEach.call(document.querySelectorAll("input[name=opt]"), function (r) { r.disabled = true; });
+    var fb = $("feedback");
+    fb.hidden = false;
+    fb.className = "feedback " + (pick === right ? "ok" : "err");
+    fb.textContent = pick === right
+      ? "✔ Acertou!"
+      : "✘ Errou. A resposta correta é: " + questions[idx].o[right];
+    $("scoreText").textContent = "Pontuação: " + score;
+    $("bar").value = idx + 1;
+    $("action").textContent = idx === questions.length - 1 ? "Ver resultado" : "Próxima pergunta";
+    $("action").focus();
+  }
+
+  function finish() {
+    $("quiz").hidden = true;
+    $("result").hidden = false;
+    $("finalScore").textContent = score + " de " + questions.length;
+    var msg = score === 10 ? "Perfeito! Você é craque da Copa."
+      : score >= 7 ? "Muito bem! Você acompanhou bem o torneio."
+      : score >= 4 ? "Bom jogo! Dá para melhorar na próxima."
+      : "Não foi dessa vez. Tente novamente!";
+    $("finalMsg").textContent = msg;
+    $("resultTitle").focus();
+  }
+
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!answered) { check(); return; }
+    if (idx < questions.length - 1) { idx++; render(); $("question").focus(); }
+    else finish();
+  });
+  $("restart").addEventListener("click", start);
+  start();
+})();
+</script>
+</body>
+</html>
